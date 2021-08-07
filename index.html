@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <script src="https://unpkg.com/vue@3.0.5"></script>
+    </head>
+    <body>
+        <div id="app">
+            <button v-on:click="hi">hi {{ name }}</button>
+            <br><br>
+            <form action="/todo">
+                <label for="notearea">Write note here:</label>
+                <br>
+                <textarea id="notearea" name="note" rows="4" cols="50" v-model='existingtext'>
+                    {{ existingtext }}
+                </textarea>
+                <br><br>
+                <input type="submit" value="Save">
+            </form>
+            <br><br>
+            <p>Demonstrate v-model:</p>
+            <p>{{ existingtext }}</p>
+        </div>
+
+        <script>
+            const app = Vue.createApp({
+                data: function() {
+                    return {
+                        name: "james",
+                        existingtext: "lorem ipsum...",
+                    }
+                },
+                methods: {
+                    hi: function() {
+                        console.log("hi " + this.name);
+                    }
+                },
+            })
+            app.mount("#app");
+        </script>
+    </body>
+</html>
