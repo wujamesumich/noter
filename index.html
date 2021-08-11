@@ -17,7 +17,8 @@
                         {{ existingtext }}
                     </textarea>
                     <br><br>
-                    <input type="submit" value="Save">
+                    <!-- <input type="submit" value="Save"> -->
+                    <button v-on:click="save_note">Save Note</button>
                 </form>
                 <br><br>
                 <p>Demonstrate v-model:</p>
@@ -30,7 +31,7 @@
                 data: function() {
                     return {
                         name: "james",
-                        existingtext: "lorem ipsum...",
+                        existingtext: "Please wait for your note to load...",
                         display_div_all: false,
                     }
                 },
@@ -43,7 +44,20 @@
                         fetch('https://wujames-noter.herokuapp.com/2021/8/10/')
                             .then(response => response.json())
                             .then(json => this.existingtext = JSON.parse(JSON.stringify(json)).note);
-                            //.then(json => this.existingtext = JSON.stringify(json));
+                    },
+                    save_note: async function() {
+                        data = {
+                            note: this.existingtext
+                        }
+
+                        const response = await fetch('https://wujames-noter.herokuapp.com/savenote/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(data)
+                        });
+                        console.log('Response: ' + response.json());
                     },
                 },
             })
