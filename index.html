@@ -40,9 +40,9 @@
                     },
                     display_div: async function() {
                         this.display_div_all = !this.display_div_all;
-                        fetch('https://jsonplaceholder.typicode.com/todos/1')
+                        fetch('https://wujames-noter.herokuapp.com/2021/8/10/')
                             .then(response => response.json())
-                            .then(json => this.existingtext = JSON.parse(JSON.stringify(json)).title);
+                            .then(json => this.existingtext = JSON.parse(JSON.stringify(json)).note);
                             //.then(json => this.existingtext = JSON.stringify(json));
                     },
                 },
