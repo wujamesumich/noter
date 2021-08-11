@@ -46,18 +46,28 @@
                             .then(json => this.existingtext = JSON.parse(JSON.stringify(json)).note);
                     },
                     save_note: async function() {
-                        data = {
-                            note: this.existingtext
-                        }
+                        let formData = new FormData();
+                        formData.append('note', this.existingtext);
 
-                        const response = await fetch('https://wujames-noter.herokuapp.com/savenote/', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify(data)
-                        });
+                        const response = await fetch('https://wujames-noter.herokuapp.com/savenote/',
+                            {
+                                body: formData,
+                                method: 'POST'
+                            });
                         console.log('Response: ' + response.json());
+
+                        // data = {
+                        //     note: this.existingtext
+                        // }
+
+                        // const response = await fetch('https://wujames-noter.herokuapp.com/savenote/', {
+                        //     method: 'POST',
+                        //     headers: {
+                        //         'Content-Type': 'application/json'
+                        //     },
+                        //     body: JSON.stringify(data)
+                        // });
+                        // console.log('Response: ' + response.json());
                     },
                 },
             })
