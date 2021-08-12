@@ -8,21 +8,22 @@
             <button v-on:click="display_div">Open</button>
             <br>
             <div v-if="display_div_all">
-                <button v-on:click="hi">hi {{ name }}</button>
+                <button v-on:click="create_note">Create Note</button>
                 <br><br>
                 <div id="notearea">
+                    <label for="title">Write title here:</label>
+                    <br>
+                    <input type="text" id="title" name="title" v-model="existingtitle">
+                    <br><br>
                     <label for="note">Write note here:</label>
                     <br>
-                    <textarea id="note" name="note" rows="4" cols="50" v-model="existingtext">
-                        {{ existingtext }}
+                    <textarea id="note" name="note" rows="4" cols="50" v-model="existingnote">
+                        {{ existingnote }}
                     </textarea>
                     <br>
                     <!-- <input type="submit" value="Save"> -->
                     <button v-on:click="save_note">Save Note</button>
                 </div>
-                <br><br>
-                <p>Demonstrate v-model:</p>
-                <p>{{ existingtext }}</p>
             </div>
         </div>
 
@@ -31,24 +32,37 @@
                 data: function() {
                     return {
                         name: "james",
-                        existingtext: "Please wait for your note to load...",
+                        existingtitle: "Please wait for your note to load...",
+                        existingnote: "Please wait for your note to load...",
                         display_div_all: false,
                     }
                 },
                 methods: {
-                    hi: function() {
-                        console.log("hi " + this.name);
-                    },
                     display_div: async function() {
                         this.display_div_all = !this.display_div_all;
                         fetch('https://wujames-noter.herokuapp.com/2021/8/10/')
+                        //fetch('http://127.0.0.1:8000/2021/8/10/')
                             .then(response => response.json())
-                            .then(json => this.existingtext = JSON.parse(JSON.stringify(json)).note);
+                            .then((json) => {
+                                this.existingtitle = JSON.parse(JSON.stringify(json)).title;
+                                this.existingnote = JSON.parse(JSON.stringify(json)).note;
+                            });
+                            //.then(json => this.existingnote = JSON.parse(JSON.stringify(json)).note);
+                    },
+                    create_note: async function() {
+                        fetch('https://wujames-noter.herokuapp.com/createnote/')
+                        //fetch('http://127.0.0.1:8000/createnote/')
+                            .then(response => response.json())
+                            .then(json => console.log(JSON.stringify(json)));
                     },
                     save_note: async function() {
                         let formData = new FormData();
-                        formData.append('note', this.existingtext);
+                        formData.append('user', 'TEMPUSER');
+                        formData.append('date', '2021-08-12');
+                        formData.append('title', this.existingtitle);
+                        formData.append('note', this.existingnote);
                         fetch('https://wujames-noter.herokuapp.com/savenote/',
+                        //fetch('http://127.0.0.1:8000/savenote/',
                             {
                                 body: formData,
                                 method: 'POST'
