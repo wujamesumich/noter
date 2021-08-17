@@ -2,39 +2,103 @@
 <html lang="en">
     <head>
         <script src="https://unpkg.com/vue@3.0.5"></script>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css"></link>
+        <link rel="stylesheet" href="noter.css"></link>
     </head>
     <body>
         <div id="app">
-            <button v-on:click="display_div">Open</button>
-            <br>
-            <div v-if="display_div_all">
-                <button v-on:click="create_note">Create Note</button>
-                <br><br>
-                <div id="notearea">
-                    <label for="title">Write title here:</label>
-                    <br>
-                    <input type="text" id="title" name="title" v-model="existingtitle">
-                    <br><br>
-                    <label for="note">Write note here:</label>
-                    <br>
-                    <textarea id="note" name="note" rows="4" cols="50" v-model="existingnote">
-                        {{ existingnote }}
-                    </textarea>
-                    <br>
-                    <!-- <input type="submit" value="Save"> -->
-                    <button v-on:click="save_note">Save Note</button>
+            <div class="container">
+                <div class="row">
+
+                    <div class="col-md-1" id="year">
+                        <h4>Year:</h4>
+                        <div v-for="year in years">
+                            <button>{{ year }}</button>
+                            <br>
+                        </div>
+                    </div>
+                    <div class="col-md-1" id="month">
+                        <h4>Month:</h4>
+                        <div v-for="month in months">
+                            <button>{{ month }}</button>
+                            <br>
+                        </div>
+                    </div>
+                    <div class="col-md-8" id="days-calendar">
+                        <button v-on:click="fill_calendar">fill calendar</button>
+                        <h4>Days:</h4>
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Sunday</th>
+                                        <th scope="col">Monday</th>
+                                        <th scope="col">Tuesday</th>
+                                        <th scope="col">Wednesday</th>
+                                        <th scope="col">Thursday</th>
+                                        <th scope="col">Friday</th>
+                                        <th scope="col">Saturday</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td v-for="i in 7">{{ calendardays[i-1] }}{{ calendarlinks[i-1] }}</td></tr>
+                                    <tr><td v-for="i in 7">{{ calendardays[i-1+7] }}{{ calendarlinks[i-1+7] }}</td></tr>
+                                    <tr><td v-for="i in 7">{{ calendardays[i-1+14] }}{{ calendarlinks[i-1+14] }}</td></tr>
+                                    <tr><td v-for="i in 7">{{ calendardays[i-1+21] }}{{ calendarlinks[i-1+21] }}</td></tr>
+                                    <tr><td v-for="i in 7">{{ calendardays[i-1+28] }}{{ calendarlinks[i-1+28] }}</td></tr>
+                                    <tr><td v-for="i in 7">{{ calendardays[i-1+35] }}{{ calendarlinks[i-1+35] }}</td></tr>
+                                </tbody>
+                            </table>
+                    </div>
+
+                    <div class="col-md-1" id="notes">
+                        <button v-on:click="display_div">Open</button>
+                        <br>
+                        <div v-if="display_div_all">
+                            <button v-on:click="create_note">Create Note</button>
+                            <br><br>
+                            <div id="notearea">
+                                <label for="title">Write title here:</label>
+                                <br>
+                                <input type="text" id="title" name="title" v-model="existingtitle">
+                                <br><br>
+                                <label for="note">Write note here:</label>
+                                <br>
+                                <textarea id="note" name="note" rows="4" cols="50" v-model="existingnote">
+                                    {{ existingnote }}
+                                </textarea>
+                                <br>
+                                <button v-on:click="save_note">Save Note</button>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
+
+
         </div>
 
         <script>
             const app = Vue.createApp({
                 data: function() {
                     return {
-                        name: "james",
+                        curruser: "TEMPUSER",
                         existingtitle: "Please wait for your note to load...",
                         existingnote: "Please wait for your note to load...",
                         display_div_all: false,
+                        months: ["01", "02", "12"],
+                        years: ['2018', '2020', '2021'],
+                        calendardays: ["-","-","-","-","-","-","-","-","-","-",
+                                    "-","-","-","-","-","-","-","-","-","-",
+                                    "-","-","-","-","-","-","-","-","-","-",
+                                    "-","-","-","-","-","-","-","-","-","-",
+                                    "-","-"],
+                        calendarlinks: ["","","","","","","","","","",
+                                    "","","","","","","","","","",
+                                    "","","","","","","","","","",
+                                    "","","","","","","","","","",
+                                    "",""],
+                        selectedmonth: "2020-01",
                     }
                 },
                 methods: {
@@ -47,7 +111,26 @@
                                 this.existingtitle = JSON.parse(JSON.stringify(json)).title;
                                 this.existingnote = JSON.parse(JSON.stringify(json)).note;
                             });
-                            //.then(json => this.existingnote = JSON.parse(JSON.stringify(json)).note);
+                    },
+                    fill_calendar: async function() {
+                        fetch('https://wujames-noter.herokuapp.com/getmonthdays/' + this.curruser + '/' + this.selectedmonth + '/')
+                        //fetch('http://127.0.0.1:8000/getmonthdays/' + this.curruser + '/' + this.selectedmonth + '/')
+                            .then(response => response.json())
+                            .then((json) => {
+                                let firstdayselectedmonth = new Date(this.selectedmonth + "-01T00:00:00.000");
+                                let offset = firstdayselectedmonth.getDay();
+                                let days = json["monthdays"]["days"];
+
+                                let day = 1;
+                                for (let i = offset; i < 31 + offset; i++) {
+                                    let daystring = day < 10 ? "0" + day : "" + day;
+                                    this.calendardays[i] = daystring;
+                                    if (days.hasOwnProperty(daystring)) {
+                                        this.calendarlinks[i] = ": " + days[daystring] + " notes";
+                                    }
+                                    day += 1
+                                }
+                            })
                     },
                     create_note: async function() {
                         fetch('https://wujames-noter.herokuapp.com/createnote/')
