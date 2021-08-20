@@ -12,21 +12,24 @@
 
                     <div class="col-md-1" id="year">
                         <h4>Year:</h4>
-                        <div v-for="year in years">
-                            <button>{{ year }}</button>
+                        <div v-for="yearobj in years">
+                            <button v-on:click="show_months(yearobj)">{{ yearobj.year }}</button>
                             <br>
                         </div>
                     </div>
                     <div class="col-md-1" id="month">
                         <h4>Month:</h4>
                         <div v-for="month in months">
-                            <button>{{ month }}</button>
+                            <button v-on:click="fill_calendar(month)">{{ translate_month(month) }}</button>
                             <br>
                         </div>
                     </div>
-                    <div class="col-md-8" id="days-calendar">
-                        <button v-on:click="fill_calendar">fill calendar</button>
-                        <h4>Days:</h4>
+                    <div class="col-md-8" id="default" v-if="defaultview">
+                        <button v-on:click="render_notes(true, 'NO DATE')">Create new note</button>
+                    </div>
+                    <div class="col-md-8" id="days-calendar" v-if="calendarview && !defaultview">
+                        <div id="days-calendar">
+                            <h4>{{ translate_month(selectedmonth) }}, {{ selectedyear }}</h4>
                             <table class="table table-bordered">
                                 <thead>
                                     <tr>
@@ -48,6 +51,21 @@
                                     <tr><td v-for="i in 7">{{ calendardays[i-1+35] }}{{ calendarlinks[i-1+35] }}</td></tr>
                                 </tbody>
                             </table>
+                        </div>
+                        <br>
+                        <div id="createnote-button">
+                            <button v-on:click="render_notes(true, 'NO DATE')">Create new note</button>
+                        </div>
+                    </div>
+                    <div class="col-md-8" id="notes" v-if="!calendarview && !defaultview">
+                        <h4>Notes:</h4>
+                        <div v-for="noteobj in notes">
+                            <div >
+                                <p>{{ noteobj.title }}</p>
+                                <p>{{ noteobj.note }}</p>
+                            </div>
+                            <br>
+                        </div>
                     </div>
 
                     <div class="col-md-1" id="notes">
@@ -83,41 +101,58 @@
                 data: function() {
                     return {
                         curruser: "TEMPUSER",
+                        defaultview: true,
+                        calendarview: false,
                         existingtitle: "Please wait for your note to load...",
                         existingnote: "Please wait for your note to load...",
                         display_div_all: false,
-                        months: ["01", "02", "12"],
-                        years: ['2018', '2020', '2021'],
-                        calendardays: ["-","-","-","-","-","-","-","-","-","-",
-                                    "-","-","-","-","-","-","-","-","-","-",
-                                    "-","-","-","-","-","-","-","-","-","-",
-                                    "-","-","-","-","-","-","-","-","-","-",
-                                    "-","-"],
-                        calendarlinks: ["","","","","","","","","","",
-                                    "","","","","","","","","","",
-                                    "","","","","","","","","","",
-                                    "","","","","","","","","","",
-                                    "",""],
-                        selectedmonth: "2020-01",
+                        months: [],
+                        years: [],
+                        calendardays: new Array(42).fill("-"),
+                        calendarlinks: new Array(42).fill(""),
+                        selectedyear: "",
+                        selectedmonth: "",
+                        notes: [],
                     }
                 },
                 methods: {
                     display_div: async function() {
                         this.display_div_all = !this.display_div_all;
-                        fetch('https://wujames-noter.herokuapp.com/2021/8/10/')
-                        //fetch('http://127.0.0.1:8000/2021/8/10/')
+                        //fetch('https://wujames-noter.herokuapp.com/2021/8/10/')
+                        fetch('http://127.0.0.1:8000/2021/8/10/')
                             .then(response => response.json())
                             .then((json) => {
                                 this.existingtitle = JSON.parse(JSON.stringify(json)).title;
                                 this.existingnote = JSON.parse(JSON.stringify(json)).note;
                             });
                     },
-                    fill_calendar: async function() {
-                        fetch('https://wujames-noter.herokuapp.com/getmonthdays/' + this.curruser + '/' + this.selectedmonth + '/')
-                        //fetch('http://127.0.0.1:8000/getmonthdays/' + this.curruser + '/' + this.selectedmonth + '/')
+                    show_months: function(yearobj) {
+                        this.selectedyear = yearobj["year"];
+                        this.months = yearobj["months"];
+                    },
+                    translate_month: function(month) {
+                        let monthnames = {
+                            "01": "Jan", "02": "Feb", "03": "Mar", "04": "Apr", "05": "May", "06": "Jun",
+                            "07": "Jul", "08": "Aug", "09": "Sep", "10": "Oct", "11": "Nov", "12": "Dec"
+                        };
+                        return monthnames[month]
+                    },
+                    fill_calendar: async function(month) {
+                        // reset calendar
+                        this.defaultview = false;
+                        this.calendarview = true;
+                        this.calendardays = new Array(42).fill("-");
+                        this.calendarlinks = new Array(42).fill("");
+                        this.selectedmonth = month;
+                        let yearandmonth = this.selectedyear + "-" + month;
+                        console.log(yearandmonth);
+                        
+                        // from /getmonthdays, get days of given month and number of notes of each day
+                        //fetch('https://wujames-noter.herokuapp.com/getmonthdays/' + this.curruser + '/' + yearandmonth + '/')
+                        fetch('http://127.0.0.1:8000/getmonthdays/' + this.curruser + '/' + yearandmonth + '/')
                             .then(response => response.json())
                             .then((json) => {
-                                let firstdayselectedmonth = new Date(this.selectedmonth + "-01T00:00:00.000");
+                                let firstdayselectedmonth = new Date(yearandmonth + "-01T00:00:00.000");
                                 let offset = firstdayselectedmonth.getDay();
                                 let days = json["monthdays"]["days"];
 
@@ -128,15 +163,55 @@
                                     if (days.hasOwnProperty(daystring)) {
                                         this.calendarlinks[i] = ": " + days[daystring] + " notes";
                                     }
-                                    day += 1
+                                    day += 1;
                                 }
-                            })
+                            });
+                    },
+                    render_notes: async function(newnote, day) {
+                        this.defaultview = false;
+                        this.calendarview = false;
+                        this.notes = [];
+
+                        let month = this.selectedmonth;
+                        let year = this.selectedyear;
+                        if (newnote) {
+                            // create new note in database
+                            await fetch('http://127.0.0.1:8000/createnote/')
+                                .then(response => response.json())
+                                .then((json) => {
+                                    console.log(JSON.stringify(json));
+                                });
+                            
+                            let today = new Date();
+                            day = String(today.getDate()).padStart(2, "0");
+                            month = String(today.getMonth() + 1).padStart(2, "0");
+                            year = today.getFullYear();
+
+                            // get all notes for today, including the new note
+                            let date = year + '-' + month + '-' + day;
+                            console.log(this.notes);
+                            console.log(date);
+                            //fetch('https://wujames-noter.herokuapp.com/createnote/')
+                            fetch('http://127.0.0.1:8000/getnotes/' + this.curruser + '/' + date + '/')
+                                .then(response => response.json())
+                                .then(json => {
+                                    this.notes = json["notes"];
+                                    console.log(this.notes);
+                                });
+                        }
+                        else {
+                            console.log("else");
+                        }
+                        
                     },
                     create_note: async function() {
-                        fetch('https://wujames-noter.herokuapp.com/createnote/')
-                        //fetch('http://127.0.0.1:8000/createnote/')
+                        //fetch('https://wujames-noter.herokuapp.com/createnote/')
+                        fetch('http://127.0.0.1:8000/createnote/')
                             .then(response => response.json())
-                            .then(json => console.log(JSON.stringify(json)));
+                            .then((json) => {
+                                console.log(JSON.stringify(json));
+                                return Promise.resolve();
+                            });
                     },
                     save_note: async function() {
                         let formData = new FormData();
@@ -144,8 +219,8 @@
                         formData.append('date', '2021-08-12');
                         formData.append('title', this.existingtitle);
                         formData.append('note', this.existingnote);
-                        fetch('https://wujames-noter.herokuapp.com/savenote/',
-                        //fetch('http://127.0.0.1:8000/savenote/',
+                        //fetch('https://wujames-noter.herokuapp.com/savenote/',
+                        fetch('http://127.0.0.1:8000/savenote/',
                             {
                                 body: formData,
                                 method: 'POST'
@@ -153,6 +228,21 @@
                             .then(response => response.json())
                             .then(json => console.log(JSON.stringify(json)));
                     },
+                    refresh_navbar: async function() {
+                        //fetch('https://wujames-noter.herokuapp.com/getyearsmonths/' + this.curruser + '/')
+                        fetch('http://127.0.0.1:8000/getyearsmonths/' + this.curruser + '/')
+                            .then(response => response.json())
+                            .then((json) => {
+                                let yearsmonths = json["yearsmonths"];
+                                for (let i = 0; i < yearsmonths.length; i++) {
+                                    let yearobj = yearsmonths[i];
+                                    this.years.push(yearobj);
+                                }
+                            });
+                    }
+                },
+                mounted() {
+                    this.refresh_navbar();
                 },
             })
             app.mount("#app");
