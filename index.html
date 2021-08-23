@@ -93,7 +93,8 @@
                                 <textarea id="note" name="note" rows="4" cols="50" v-model="noteobj.note">
                                     {{ noteobj.note }}
                                 </textarea><br>
-                                <button v-on:click="save_note(noteobj.note_num, noteobj.title, noteobj.note)">Save Note</button>
+                                <button v-on:click="save_note(noteobj.note_num, noteobj.title, noteobj.note)">Save Note</button><br>
+                                <button v-on:click="delete_note(noteobj.note_num)">Delete Note</button>
                             </div>
                             <br>
                         </div>
@@ -156,7 +157,7 @@
                         fetch('https://wujames-noter.herokuapp.com/getmonthdays/' + this.curruser + '/' + yearandmonth + '/')
                         //fetch('http://127.0.0.1:8000/getmonthdays/' + this.curruser + '/' + yearandmonth + '/')
                             .then(response => response.json())
-                            .then((json) => {
+                            .then(json => {
                                 let firstdayselectedmonth = new Date(yearandmonth + "-01T00:00:00.000");
                                 let offset = firstdayselectedmonth.getDay();
                                 let days = json["monthdays"]["days"];
@@ -194,7 +195,7 @@
                             await fetch('https://wujames-noter.herokuapp.com/createnote/')
                             //await fetch('http://127.0.0.1:8000/createnote/')
                                 .then(response => response.json())
-                                .then((json) => {
+                                .then(json => {
                                     console.log(JSON.stringify(json));
                                 });
                             
@@ -240,7 +241,7 @@
                         console.log(this.selectedyear + "-" + this.selectedmonth + "-" + this.selectedday);
                         formData.append("user", this.curruser);
                         formData.append("date", this.selectedyear + "-" + this.selectedmonth + "-" + this.selectedday);
-                        formData.append("note_num", note_num)
+                        formData.append("note_num", note_num);
                         formData.append("title", title);
                         formData.append("note", note);
                         fetch('https://wujames-noter.herokuapp.com/savenote/',
@@ -251,6 +252,33 @@
                             })
                             .then(response => response.json())
                             .then(json => console.log(JSON.stringify(json)));
+                    },
+                    delete_note: async function(note_num) {
+                        console.log(note_num);
+                        let formData = new FormData();
+                        console.log(this.selectedyear + "-" + this.selectedmonth + "-" + this.selectedday);
+                        formData.append("user", this.curruser);
+                        formData.append("date", this.selectedyear + "-" + this.selectedmonth + "-" + this.selectedday);
+                        formData.append("note_num", note_num);
+                        fetch('https://wujames-noter.herokuapp.com/deletenote/',
+                        //fetch('http://127.0.0.1:8000/deletenote/',
+                            {
+                                body: formData,
+                                method: 'POST'
+                            })
+                            .then(response => response.json())
+                            .then(json => {
+                                console.log("num_notes_left: " + json["num_notes_left"]);
+                                // if all notes for the day deleted, go back to default screen
+                                if (json["num_notes_left"] === 0) {
+                                    this.defaultview = true;
+                                    this.refresh_navbar();
+                                }
+                                // otherwise, just refresh notes screen
+                                else {
+                                    this.render_notes(false, this.selectedday);
+                                }
+                            });
                     },
                     refresh_navbar: async function() {
                         fetch('https://wujames-noter.herokuapp.com/getyearsmonths/' + this.curruser + '/')
