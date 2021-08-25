@@ -8,7 +8,32 @@
     <body>
         <div id="app">
             <div class="container">
-                <div class="row">
+
+                <div class="row" v-if="!loggedin">
+                    <div class="col-md-4" id="login">
+                        <h4>Login:</h4>
+                        <label for="loginusername">Username:</label><br>
+                        <input type="text" id="loginusername" name="loginusername" v-model="loginusername"><br>
+                        <label for="loginpassword">Password:</label><br>
+                        <input type="text" id="loginpassword" name="loginpassword" v-model="loginpassword"><br>
+                        <button v-on:click="login">Login</button>
+                    </div>
+                    <div class="col-md-4" id="register">
+                        <h4>Register:</h4>
+                        <label for="registerusername">Username:</label><br>
+                        <input type="text" id="registerusername" name="registerusername" v-model="registerusername"><br>
+                        <label for="registerpassword">Password:</label><br>
+                        <input type="text" id="registerpassword" name="registerpassword" v-model="registerpassword"><br>
+                        <label for="registerpassword2">Confirm Password:</label><br>
+                        <input type="text" id="registerpassword2" name="registerpassword2" v-model="registerpassword2"><br>
+                        <button v-on:click="register">Register</button>
+                    </div>
+                </div>
+                <div class="row" v-if="!loggedin">
+                    <p>{{ warning }}</p>
+                </div>
+
+                <div class="row" v-if="loggedin">
 
                     <div class="col-md-1" id="year">
                         <h4>Year:</h4>
@@ -16,7 +41,6 @@
                             <button v-on:click="show_months(yearobj)">{{ yearobj.year }}</button>
                             <br>
                         </div>
-                        <p>{{ selectedyear }}-{{ selectedmonth }}-{{ selectedday }}</p>
                     </div>
                     <div class="col-md-2" id="month">
                         <h4>Month:</h4>
@@ -98,7 +122,10 @@
                             </div>
                             <br>
                         </div>
-                        <button v-on:click="shownotes">SHOWNOTES</button>
+                    </div>
+                    <div class="col-md-1" id="logout">
+                        <p>Hi: <b>{{ curruser }}</b></p>
+                        <button v-on:click="logout">Logout</button>
                     </div>
 
                 </div>
@@ -109,26 +136,134 @@
             const app = Vue.createApp({
                 data: function() {
                     return {
-                        curruser: "TEMPUSER",
+                        curruser: "",
+                        loggedin: false,
+                        loginusername: "",
+                        loginpassword: "",
+                        registerusername: "",
+                        registerpassword: "",
+                        registerpassword2: "",
+                        warning: "",
                         defaultview: true,
                         calendarview: false,
-                        existingtitle: "Please wait for your note to load...",
-                        existingnote: "Please wait for your note to load...",
                         display_div_all: false,
                         months: [],
                         years: [],
+                        notes: [],
                         calendardays: new Array(42).fill("-"),
                         calendarlinks: new Array(42).fill(""),
                         selectedyear: "",
                         selectedmonth: "",
                         selectedday: "",
-                        notes: [],
                     }
                 },
                 methods: {
-                    // for debug
-                    shownotes: function() {
-                        console.log(this.notes);
+                    resetvariables: function() {
+                        this.curruser = "";
+                        this.loggedin = false;
+                        this.loginusername = "";
+                        this.loginpassword = "";
+                        this.registerusername = "";
+                        this.registerpassword = "";
+                        this.registerpassword2 = "";
+                        this.warning = "";
+                        this.defaultview = true;
+                        this.calendarview = false;
+                        this.display_div_all = false;
+                        this.months = [];
+                        this.years = [];
+                        this.notes = [];
+                        this.calendardays = new Array(42).fill("-");
+                        this.calendarlinks = new Array(42).fill("");
+                        this.selectedyear = "";
+                        this.selectedmonth = "";
+                        this.selectedday = "";
+                    },
+                    login: async function() {
+                        let formData = new FormData();
+                        formData.append("user", this.loginusername);
+                        //fetch('https://wujames-noter.herokuapp.com/login/',
+                        fetch('http://127.0.0.1:8000/login/',
+                            {
+                                body: formData,
+                                method: "POST"
+                            })
+                            .then(response => response.json())
+                            .then(json => {
+                                if (json["user_exists"]) {
+                                    console.log(this.loginpassword + json['salt']);
+                                    let hashpassword = "" + this.stringToHash(this.loginpassword + json['salt']);
+                                    console.log(hashpassword);
+                                    if (hashpassword === json["password"]) {
+                                        this.curruser = json["user"];
+                                        this.loggedin = true;
+                                        this.refresh_navbar();
+                                    }
+                                    else {
+                                        this.warning = "Password incorrect";
+                                    }
+                                }
+                                else {
+                                    this.warning = "Username incorrect";
+                                }
+                            });
+                    },
+                    register: async function() {
+                        if (this.registerusername === "" || this.registerpassword === "") {
+                            this.warning = "Please do not leave the fields blank";
+                            return;
+                        }
+                        if (this.registerpassword !== this.registerpassword2) {
+                            this.warning = "Passwords do not match";
+                            return;
+                        }
+
+                        let formData = new FormData();
+                        formData.append("user", this.registerusername);
+                        //let user_exists = await fetch('https://wujames-noter.herokuapp.com/userexists/',
+                        let user_exists = await fetch('http://127.0.0.1:8000/userexists/',
+                            {
+                                body: formData,
+                                method: "POST"
+                            })
+                            .then(response => response.json())
+                            .then(json => {
+                                return json["user_exists"];
+                            });
+                        if (user_exists) {
+                            this.warning = "Username already exists";
+                            return;
+                        }
+
+                        let saltstring = "" + Math.random();
+                        let hashpassword = "" + this.stringToHash(this.registerpassword + saltstring);
+                        console.log(this.registerpassword + saltstring);
+                        console.log(hashpassword);
+                        formData = new FormData();
+                        formData.append("user", this.registerusername);
+                        formData.append("password", hashpassword);
+                        formData.append("salt", saltstring);
+                        //fetch('https://wujames-noter.herokuapp.com/register/',
+                        fetch('http://127.0.0.1:8000/register/',
+                            {
+                                body: formData,
+                                method: "POST"
+                            })
+                            .then(response => response.json())
+                            .then(json => {
+                                this.curruser = json["user"];
+                                this.loggedin = true;
+                                this.refresh_navbar();
+                                console.log(JSON.stringify(json))
+                            });
+                    },
+                    logout: async function() {
+                        //fetch('https://wujames-noter.herokuapp.com/logout/')
+                        fetch('http://127.0.0.1:8000/logout/')
+                            .then(response => response.json())
+                            .then(json => {
+                                this.resetvariables();
+                            });
                     },
                     show_months: function(yearobj) {
                         this.selectedyear = yearobj["year"];
@@ -154,8 +289,8 @@
                         console.log(yearandmonth);
                         
                         // from /getmonthdays, get days of given month and number of notes of each day
-                        fetch('https://wujames-noter.herokuapp.com/getmonthdays/' + this.curruser + '/' + yearandmonth + '/')
-                        //fetch('http://127.0.0.1:8000/getmonthdays/' + this.curruser + '/' + yearandmonth + '/')
+                        //fetch('https://wujames-noter.herokuapp.com/getmonthdays/' + yearandmonth + '/')
+                        fetch('http://127.0.0.1:8000/getmonthdays/' + yearandmonth + '/')
                             .then(response => response.json())
                             .then(json => {
                                 let firstdayselectedmonth = new Date(yearandmonth + "-01T00:00:00.000");
@@ -192,8 +327,8 @@
                         let year = this.selectedyear;
                         if (newnote) {
                             // create new note in database
-                            await fetch('https://wujames-noter.herokuapp.com/createnote/')
-                            //await fetch('http://127.0.0.1:8000/createnote/')
+                            //await fetch('https://wujames-noter.herokuapp.com/createnote/')
+                            await fetch('http://127.0.0.1:8000/createnote/')
                                 .then(response => response.json())
                                 .then(json => {
                                     console.log(JSON.stringify(json));
@@ -209,23 +344,23 @@
 
                             // get all notes for today, including the new note
                             let date = year + '-' + month + '-' + day;
-                            await fetch('https://wujames-noter.herokuapp.com/getnotes/' + this.curruser + '/' + date + '/')
-                            //await fetch('http://127.0.0.1:8000/getnotes/' + this.curruser + '/' + date + '/')
+                            //await fetch('https://wujames-noter.herokuapp.com/getnotes/' + date + '/')
+                            await fetch('http://127.0.0.1:8000/getnotes/' + date + '/')
                                 .then(response => response.json())
                                 .then(json => {
                                     this.notes = json["notes"];
                                     console.log(this.notes);
                                 });
 
-                            // refresh navbar if current year/month not in db
+                            // refresh navbar in case current year/month not in db
                             this.refresh_navbar();
                         }
                         else {
                             console.log("else");
                             this.selectedday = day;
                             let date = year + '-' + month + '-' + day;
-                            await fetch('https://wujames-noter.herokuapp.com/getnotes/' + this.curruser + '/' + date + '/')
-                            //await fetch('http://127.0.0.1:8000/getnotes/' + this.curruser + '/' + date + '/')
+                            //await fetch('https://wujames-noter.herokuapp.com/getnotes/' + date + '/')
+                            await fetch('http://127.0.0.1:8000/getnotes/' + date + '/')
                                 .then(response => response.json())
                                 .then(json => {
                                     this.notes = json["notes"];
@@ -244,8 +379,8 @@
                         formData.append("note_num", note_num);
                         formData.append("title", title);
                         formData.append("note", note);
-                        fetch('https://wujames-noter.herokuapp.com/savenote/',
-                        //fetch('http://127.0.0.1:8000/savenote/',
+                        //fetch('https://wujames-noter.herokuapp.com/savenote/',
+                        fetch('http://127.0.0.1:8000/savenote/',
                             {
                                 body: formData,
                                 method: 'POST'
@@ -260,8 +395,8 @@
                         formData.append("user", this.curruser);
                         formData.append("date", this.selectedyear + "-" + this.selectedmonth + "-" + this.selectedday);
                         formData.append("note_num", note_num);
-                        fetch('https://wujames-noter.herokuapp.com/deletenote/',
-                        //fetch('http://127.0.0.1:8000/deletenote/',
+                        //fetch('https://wujames-noter.herokuapp.com/deletenote/',
+                        fetch('http://127.0.0.1:8000/deletenote/',
                             {
                                 body: formData,
                                 method: 'POST'
@@ -281,8 +416,8 @@
                             });
                     },
                     refresh_navbar: async function() {
-                        fetch('https://wujames-noter.herokuapp.com/getyearsmonths/' + this.curruser + '/')
-                        //fetch('http://127.0.0.1:8000/getyearsmonths/' + this.curruser + '/')
+                        //fetch('https://wujames-noter.herokuapp.com/getyearsmonths/')
+                        fetch('http://127.0.0.1:8000/getyearsmonths/')
                             .then(response => response.json())
                             .then((json) => {
                                 this.years = [];
@@ -292,11 +427,22 @@
                                     this.years.push(yearobj);
                                 }
                             });
+                    },
+                    // https://www.geeksforgeeks.org/how-to-create-hash-from-string-in-javascript/
+                    stringToHash: function(string) {
+                        var hash = 0;
+                        if (string.length == 0) return hash;
+                        for (i = 0; i < string.length; i++) {
+                            char = string.charCodeAt(i);
+                            hash = ((hash << 5) - hash) + char;
+                            hash = hash & hash;
+                        }  
+                        return hash;
                     }
                 },
-                mounted() {
-                    this.refresh_navbar();
-                },
+                // mounted() {
+                //     this.refresh_navbar();
+                // },
             })
             app.mount("#app");
         </script>
