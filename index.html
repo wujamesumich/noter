@@ -182,8 +182,8 @@
                     login: async function() {
                         let formData = new FormData();
                         formData.append("user", this.loginusername);
-                        //fetch('https://wujames-noter.herokuapp.com/login/',
-                        fetch('http://127.0.0.1:8000/login/',
+                        fetch('https://wujames-noter.herokuapp.com/login/',
+                        //fetch('http://127.0.0.1:8000/login/',
                             {
                                 body: formData,
                                 method: "POST"
@@ -220,8 +220,8 @@
 
                         let formData = new FormData();
                         formData.append("user", this.registerusername);
-                        //let user_exists = await fetch('https://wujames-noter.herokuapp.com/userexists/',
-                        let user_exists = await fetch('http://127.0.0.1:8000/userexists/',
+                        let user_exists = await fetch('https://wujames-noter.herokuapp.com/userexists/',
+                        //let user_exists = await fetch('http://127.0.0.1:8000/userexists/',
                             {
                                 body: formData,
                                 method: "POST"
@@ -243,8 +243,8 @@
                         formData.append("user", this.registerusername);
                         formData.append("password", hashpassword);
                         formData.append("salt", saltstring);
-                        //fetch('https://wujames-noter.herokuapp.com/register/',
-                        fetch('http://127.0.0.1:8000/register/',
+                        fetch('https://wujames-noter.herokuapp.com/register/',
+                        //fetch('http://127.0.0.1:8000/register/',
                             {
                                 body: formData,
                                 method: "POST"
@@ -258,8 +258,8 @@
                             });
                     },
                     logout: async function() {
-                        //fetch('https://wujames-noter.herokuapp.com/logout/')
-                        fetch('http://127.0.0.1:8000/logout/')
+                        fetch('https://wujames-noter.herokuapp.com/logout/')
+                        //fetch('http://127.0.0.1:8000/logout/')
                             .then(response => response.json())
                             .then(json => {
                                 this.resetvariables();
@@ -289,8 +289,8 @@
                         console.log(yearandmonth);
                         
                         // from /getmonthdays, get days of given month and number of notes of each day
-                        //fetch('https://wujames-noter.herokuapp.com/getmonthdays/' + yearandmonth + '/')
-                        fetch('http://127.0.0.1:8000/getmonthdays/' + yearandmonth + '/')
+                        fetch('https://wujames-noter.herokuapp.com/getmonthdays/' + yearandmonth + '/')
+                        //fetch('http://127.0.0.1:8000/getmonthdays/' + yearandmonth + '/')
                             .then(response => response.json())
                             .then(json => {
                                 let firstdayselectedmonth = new Date(yearandmonth + "-01T00:00:00.000");
@@ -327,8 +327,8 @@
                         let year = this.selectedyear;
                         if (newnote) {
                             // create new note in database
-                            //await fetch('https://wujames-noter.herokuapp.com/createnote/')
-                            await fetch('http://127.0.0.1:8000/createnote/')
+                            await fetch('https://wujames-noter.herokuapp.com/createnote/')
+                            //await fetch('http://127.0.0.1:8000/createnote/')
                                 .then(response => response.json())
                                 .then(json => {
                                     console.log(JSON.stringify(json));
@@ -344,8 +344,8 @@
 
                             // get all notes for today, including the new note
                             let date = year + '-' + month + '-' + day;
-                            //await fetch('https://wujames-noter.herokuapp.com/getnotes/' + date + '/')
-                            await fetch('http://127.0.0.1:8000/getnotes/' + date + '/')
+                            await fetch('https://wujames-noter.herokuapp.com/getnotes/' + date + '/')
+                            //await fetch('http://127.0.0.1:8000/getnotes/' + date + '/')
                                 .then(response => response.json())
                                 .then(json => {
                                     this.notes = json["notes"];
@@ -359,8 +359,8 @@
                             console.log("else");
                             this.selectedday = day;
                             let date = year + '-' + month + '-' + day;
-                            //await fetch('https://wujames-noter.herokuapp.com/getnotes/' + date + '/')
-                            await fetch('http://127.0.0.1:8000/getnotes/' + date + '/')
+                            await fetch('https://wujames-noter.herokuapp.com/getnotes/' + date + '/')
+                            //await fetch('http://127.0.0.1:8000/getnotes/' + date + '/')
                                 .then(response => response.json())
                                 .then(json => {
                                     this.notes = json["notes"];
@@ -379,8 +379,8 @@
                         formData.append("note_num", note_num);
                         formData.append("title", title);
                         formData.append("note", note);
-                        //fetch('https://wujames-noter.herokuapp.com/savenote/',
-                        fetch('http://127.0.0.1:8000/savenote/',
+                        fetch('https://wujames-noter.herokuapp.com/savenote/',
+                        //fetch('http://127.0.0.1:8000/savenote/',
                             {
                                 body: formData,
                                 method: 'POST'
@@ -395,8 +395,8 @@
                         formData.append("user", this.curruser);
                         formData.append("date", this.selectedyear + "-" + this.selectedmonth + "-" + this.selectedday);
                         formData.append("note_num", note_num);
-                        //fetch('https://wujames-noter.herokuapp.com/deletenote/',
-                        fetch('http://127.0.0.1:8000/deletenote/',
+                        fetch('https://wujames-noter.herokuapp.com/deletenote/',
+                        //fetch('http://127.0.0.1:8000/deletenote/',
                             {
                                 body: formData,
                                 method: 'POST'
@@ -416,8 +416,8 @@
                             });
                     },
                     refresh_navbar: async function() {
-                        //fetch('https://wujames-noter.herokuapp.com/getyearsmonths/')
-                        fetch('http://127.0.0.1:8000/getyearsmonths/')
+                        fetch('https://wujames-noter.herokuapp.com/getyearsmonths/')
+                        //fetch('http://127.0.0.1:8000/getyearsmonths/')
                             .then(response => response.json())
                             .then((json) => {
                                 this.years = [];
